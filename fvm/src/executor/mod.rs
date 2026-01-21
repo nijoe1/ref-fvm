@@ -133,4 +133,5 @@ impl ApplyRet {
 pub enum ApplyKind {
     Explicit,
     Implicit,
+    Simulation,  // NEW
 }

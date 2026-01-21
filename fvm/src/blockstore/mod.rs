@@ -7,3 +7,7 @@ mod discard;
 
 pub use buffered::BufferedBlockstore;
 pub(crate) use discard::DiscardBlockstore;
+
+// Re-export Blockstore trait for use by consumers like filecoin-ffi
+// This ensures they use the same version of the trait as this crate
+pub use fvm_ipld_blockstore::Blockstore;

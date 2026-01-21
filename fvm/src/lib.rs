@@ -22,7 +22,11 @@ pub mod syscalls;
 pub mod gas;
 pub mod state_tree;
 
-mod blockstore;
+pub mod blockstore;
+
+// Re-export fvm_ipld_encoding for use by consumers like filecoin-ffi
+// This ensures they use the same version as this crate
+pub use fvm_ipld_encoding as ipld_encoding;
 
 #[cfg(not(feature = "testing"))]
 mod account_actor;
