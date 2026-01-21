@@ -268,7 +268,7 @@ where
                 exec_trace,
                 events,
             ),
-            ApplyKind::Implicit => Ok(ApplyRet {
+            ApplyKind::Implicit | ApplyKind::Simulation => Ok(ApplyRet {
                 msg_receipt: receipt,
                 penalty: TokenAmount::zero(),
                 miner_tip: TokenAmount::zero(),
@@ -341,8 +341,9 @@ where
         //  these across the boundary is also a no-go.
         let pl = &self.context().price_list;
 
+        // For Implicit and Simulation, we don't charge inclusion cost
         let (inclusion_cost, miner_penalty_amount) = match apply_kind {
-            ApplyKind::Implicit => (
+            ApplyKind::Implicit | ApplyKind::Simulation => (
                 GasCharge::new("none", Gas::zero(), Gas::zero()),
                 Default::default(),
             ),
@@ -380,6 +381,7 @@ where
             }
         };
 
+        // For Implicit messages, skip all remaining validation
         if apply_kind == ApplyKind::Implicit {
             return Ok(Ok((sender_id, TokenAmount::zero(), inclusion_cost)));
         }
@@ -398,6 +400,15 @@ where
                 )));
             }
         };
+
+        // For Simulation mode: skip sender type validation, nonce check, balance validation,
+        // and state mutation. This enables eth_call/eth_estimateGas to simulate calls from
+        // any actor type (including EVM contracts) without requiring balance or mutating state.
+        // This matches Ethereum's behavior where simulations are read-only and don't require
+        // the sender to have sufficient balance for gas.
+        if apply_kind == ApplyKind::Simulation {
+            return Ok(Ok((sender_id, TokenAmount::zero(), inclusion_cost)));
+        }
 
         // Sender is valid if it is:
         // - an account actor
